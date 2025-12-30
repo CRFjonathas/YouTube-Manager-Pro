@@ -29,7 +29,38 @@ class YouTubeManager(ctk.CTk):
         self.status_label.pack(pady=5)
 
     def iniciar_download(self):
-        print("Botão clicado (Lógica ainda não implementada)")
+        link = self.url_entry.get()
+        if not link:
+            self.status_label.configure(text="Erro: Link vazio!", text_color="red")
+            return
+        
+        self.download_btn.configure(state="disabled", text="Baixando...")
+        self.status_label.configure(text="Iniciando conexão...", text_color="white")
+        
+        # Inicia a Thread para não travar a GUI
+        thread = threading.Thread(target=self._download_logic, args=(link,))
+        thread.start()
+
+    def _download_logic(self, link):
+        try:
+            ydl_opts = {
+                'outtmpl': 'Downloads/%(title)s.%(ext)s',
+                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            }
+
+            if not os.path.exists('Downloads'):
+                os.makedirs('Downloads')
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([link])
+
+            self.status_label.configure(text="Sucesso! Vídeo salvo na pasta Downloads.", text_color="green")
+            
+        except Exception as e:
+            self.status_label.configure(text=f"Erro: {str(e)}", text_color="red")
+        
+        finally:
+            self.download_btn.configure(state="normal", text="Iniciar Download")
 
 if __name__ == "__main__":
     app = YouTubeManager()
